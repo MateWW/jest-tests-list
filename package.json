@@ -1,0 +1,38 @@
+{
+  "name": "jest-tests-list",
+  "description": "Simple way to list all jest tests without running them and even more powerful API",
+  "type": "module",
+  "main": "./dist/api.js",
+  "bin": {
+    "jest-tests-list": "bin/jest-tests-list.js"
+  },
+  "version": "0.0.1",
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "scripts": {
+    "build": "bun build ./src/api.ts ./src/cli.ts ./src/reporter.ts ./src/runner.ts --outdir ./dist --external \"jest-each\" --target \"node\"",
+    "dev": "bun build --watch ./src/api.ts ./src/cli.ts ./src/reporter.ts ./src/runner.ts --outdir ./dist --external \"jest-each\" --target \"node\"",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "prepublishOnly": "yarn build"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.10",
+    "@types/bun": "latest",
+    "jest-each": "^29.7.0",
+    "jest-runtime": "^29.7.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0",
+    "jest-each": "*",
+    "jest-runtime": "*"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
+  "dependencies": {
+    "arg": "^5.0.2",
+    "detect-package-manager": "^3.0.2",
+    "import-local": "^3.0.2"
+  }
+}
