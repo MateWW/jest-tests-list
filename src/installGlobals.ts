@@ -11,11 +11,15 @@ function createGlobalCall<T>(name:string[], method: Method): T {
   return ((description: string, fn: AnyFn) => method(name, description, fn) ) as T;
 }
 
+function createHookCall(name: string[], method: Method): Global.HookBase {
+  return (fn: AnyFn) => method(name, '', fn);
+}
+
 export function installHooks(environment: JestEnvironment, method: Method) {
-  environment.global.beforeAll = createGlobalCall<Global.HookBase>(['beforeAll'], method);
-  environment.global.beforeEach = createGlobalCall<Global.HookBase>(['beforeAll'], method);
-  environment.global.afterAll = createGlobalCall<Global.HookBase>(['afterAll'], method);
-  environment.global.afterEach = createGlobalCall<Global.HookBase>(['afterAll'], method);
+  environment.global.beforeAll = createHookCall(['beforeAll'], method);
+  environment.global.beforeEach = createHookCall(['beforeAll'], method);
+  environment.global.afterAll = createHookCall(['afterAll'], method);
+  environment.global.afterEach = createHookCall(['afterAll'], method);
 }
 
 
@@ -24,7 +28,7 @@ export function installDescribe(environment: JestEnvironment, method: Method) {
   describe.skip = createGlobalCall<Global.Describe>(['describe', 'skip'], method);
   describe.skip.each = bindEach(describe.skip);
   describe.only = createGlobalCall<Global.Describe>(['describe', 'only'], method);
-  describe.only.each = bindEach(createGlobalCall(['describe', 'only'], method));
+  describe.only.each = bindEach(describe.only);
   describe.each = bindEach(describe);
   environment.global.describe = describe;
   environment.global.fdescribe = describe.only;

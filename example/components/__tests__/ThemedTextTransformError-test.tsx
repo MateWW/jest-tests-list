@@ -1,6 +1,6 @@
 import * as React from 'react';
 import renderer from 'react-test-renderer';
-
+throw new Error('tracking error');
 import { ThemedText } from '../ThemedText';
 
 console.log('12312312');
@@ -23,6 +23,7 @@ describe('parent describe', () => {
     ${3} | ${"3"}
     ${4} | ${"4"}
   `('describe each with tag for value "$value"', () => {
+    
     test('test inside describe tag', () => {
       debugger
     });

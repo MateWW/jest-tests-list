@@ -1,9 +1,22 @@
-import type { AssertionResult, TestResult } from '@jest/test-result';
+import type { AssertionResult } from '@jest/test-result';
 import type { Config } from '@jest/types';
 import type Runtime from 'jest-runtime';
 import type { JestEnvironment } from '@jest/environment';
 import {installDescribe, installHooks, installTest} from './installGlobals';
-import type { ExtendedTestResult, TreeItem, TreeItemDescribe, TreeItemHook } from './types';
+import type { ExtendedTestResult, TreeItem, TreeItemDescribe } from './types';
+
+const EMPTY_TEST_RESULT: AssertionResult = {
+  ancestorTitles: [],
+  duration: 0,
+  failureDetails: [],
+  failureMessages: [],
+  fullName: '',
+  invocations: 1,
+  location: null,
+  numPassingAsserts: 1,
+  status: 'pending',
+  title: '',
+} 
 
 export default async function jestScan(
   _globalConfig: Config.GlobalConfig,
@@ -15,29 +28,36 @@ export default async function jestScan(
   const startTime = performance.now();
 
   const testResults: AssertionResult[] = [];
-  const output: TreeItem[] = [];
+  let output: TreeItem[] = [];
   let context: TreeItemDescribe;
 
-  installHooks(environment, (name, describe, fn) => {
-    context.children.push({ type: 'hook', ancestors: context.ancestors, describe, callPath: name, functionContent: fn!.toString() });
+  installHooks(environment, (name, _describe, fn) => {
+    context.children.push({ type: 'hook', ancestors: [...context.ancestors, context.describe], callPath: name, functionContent: fn!.toString() });
   })
 
   installDescribe(environment, (name, describe, fn) => {
       const parent = context;
       const ancestors = parent ? [...(parent.ancestors ?? []), parent.describe] : []
-      context = { type: 'describe', ancestors, describe, callPath: name, functionContent: fn!.toString(), children: [] };
+      context = { type: 'describe', ancestors, describe, callPath: name, children: [] };
       (parent?.children || output).push(context);
-      fn?.();
+      try {
+        fn?.();
+      } catch (e) {
+        context.error = e;
+        console.error(e);
+      }
       context = parent;
   });
+
   installTest(environment, (name, describe, fn) => {
-    context.children.push({ type: 'test', ancestors: context.ancestors, describe, callPath: name, functionContent: fn?.toString() });
+    const ancestors = context ? [...context.ancestors, context.describe] : [];
+    context.children.push({ type: 'test', ancestors, describe, callPath: name, functionContent: fn?.toString() });
     testResults.push({
-      ancestorTitles: context.ancestors,
+      ancestorTitles: ancestors,
       duration: 0,
       failureDetails: [],
       failureMessages: [],
-      fullName: `${context.ancestors.join(' ')} ${describe}`,
+      fullName: `${ancestors.join(' ')} ${describe}`,
       invocations: 1,
       location: null,
       numPassingAsserts: 1,
@@ -50,13 +70,20 @@ export default async function jestScan(
 
   const esm = runtime.unstable_shouldLoadAsEsm(testPath);
 
-  if (esm) {
-    await runtime.unstable_importModule(testPath);
-  } else {
-    runtime.requireModule(testPath);
+  try {
+    if (esm) {
+      await runtime.unstable_importModule(testPath);
+    } else {
+      runtime.requireModule(testPath);
+    }
+  } catch (e) {
+    output = [{ type: 'error', error: e }];
   }
-
   const endTime = performance.now();
+  
+  if(!testResults.length){
+    testResults.push(EMPTY_TEST_RESULT);
+  }
 
   return {
     output,

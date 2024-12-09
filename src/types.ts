@@ -3,7 +3,7 @@ export interface ExtendedTestResult extends TestResult {
   output: TreeItem[];
 }
 
-export interface TreeItemHook extends TreeItemBase {
+export interface TreeItemHook extends Omit<TreeItemBase, 'describe'> {
   type: 'hook';
   functionContent: string;
 }
@@ -13,7 +13,7 @@ export interface TreeItemTest extends TreeItemBase {
 }
 export interface TreeItemDescribe extends TreeItemBase {
   type: 'describe';
-  functionContent: string;
+  error?: unknown;
   children: TreeItem[];
 }
 
@@ -23,7 +23,12 @@ interface TreeItemBase {
   callPath: string[];
 }
 
-export type TreeItem = TreeItemHook | TreeItemTest | TreeItemDescribe;
+export interface TreeError {
+  type: 'error';
+  error: unknown;
+}
+
+export type TreeItem = TreeItemHook | TreeItemTest | TreeItemDescribe | TreeError;
 export type ExtendedTreeItem = TreeItem  & { parent?: TreeItem; }
 
 export type TestsByFile = {
