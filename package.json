@@ -6,7 +6,7 @@
   "bin": {
     "jest-tests-list": "bin/jest-tests-list.js"
   },
-  "version": "0.0.1",
+  "version": "0.0.2",
   "files": [
     "dist",
     "bin"
